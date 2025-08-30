@@ -1,7 +1,7 @@
 package main 
 
 import (
-	"log"
+    "log"
     "os"
     "path/filepath"
 	"github.com/golang-migrate/migrate/v4"
@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-    dir, err := filepath.Abs("db", "migrations")
+    dir, err := filepath.Abs(os.Getenv("MIGRATIONS_DIR"))
     if err != nil {
         log.Fatal(err)
     }
