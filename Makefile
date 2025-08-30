@@ -1,8 +1,11 @@
-ENTRY=main.go
-OUT=main
+run-internal:
+	go run ./internal/main.go
 
-run: main.go
-	go run $(ENTRY)
+run-open-banking:
+	go run ./internal/open-banking.go
 
-build:
-	go build -o $(OUT) build $(ENTRY)
+build-internal:
+	go build -o ./internal.bin ./internal/main.go
+
+build-open-banking:
+	go build -o ./open-banking.bin ./open-banking/main.go
