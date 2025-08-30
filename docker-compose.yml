@@ -1,0 +1,57 @@
+x-pg-env: &pg-env
+  PGHOST: ${DB_HOST}
+  PGPORT: ${DB_PORT}
+  POSTGRES_USER: ${DB_USER}
+  POSTGRES_PASSWORD: ${DB_PASSWORD}
+  POSTGRES_DB: ${DB_NAME}
+  PGDATA: /var/lib/postgresql/data/banking
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    hostname: ${DB_HOST}
+    networks:
+      - main
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    environment:
+       <<: *pg-env
+    volumes:
+      - db-data:/var/lib/postgresql/data/banking
+    restart: always
+
+  open-banking:
+    build:
+      context: .
+      dockerfile: ./docker/open-banking.Dockerfile
+    container_name: open-banking
+    hostname: open-banking
+    networks:
+      - main
+    ports:
+      - ${OPEN_BANKING_PORT}:${OPEN_BANKING_PORT}
+    environment:
+       <<: *pg-env
+    restart: always
+
+  internal:
+    build:
+      context: .
+      dockerfile: ./docker/internal.Dockerfile
+    container_name: internal
+    hostname: internal
+    networks:
+      - main
+    ports:
+      - ${INTERNAL_PORT}:${INTERNAL_PORT}
+    environment:
+       <<: *pg-env
+    restart: always
+
+volumes:
+  db-data:   
+
+networks:
+  main:
+    driver: bridge
