@@ -1,9 +1,8 @@
 package main
 
-import (
-    "fmt"
-)
+import "banking/open-banking/app"
 
 func main() {
-    fmt.Println("Hello from open-banking")
+    app.RunServer()
 }
+
