@@ -23,8 +23,8 @@ services:
 
   open-banking:
     build:
-      context: .
-      dockerfile: ./docker/open-banking.Dockerfile
+      context: ../
+      dockerfile: ./open-banking.Dockerfile
     container_name: open-banking
     hostname: open-banking
     networks:
@@ -37,8 +37,8 @@ services:
 
   internal:
     build:
-      context: .
-      dockerfile: ./docker/internal.Dockerfile
+      context: ../
+      dockerfile: ./internal.Dockerfile
     container_name: internal
     hostname: internal
     networks:

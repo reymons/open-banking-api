@@ -1,0 +1,2 @@
+# /lib
+Project-independent libraries

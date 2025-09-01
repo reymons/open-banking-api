@@ -1,0 +1,2 @@
+# /bin
+Compiled applications

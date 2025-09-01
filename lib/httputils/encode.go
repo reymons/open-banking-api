@@ -1,8 +1,8 @@
-package utils
+package httputils 
 
 import (
-    "banking/validation"
     "encoding/json"
+    "banking/lib/validation"
 )
 
 // Decodes an http body and validates it.
