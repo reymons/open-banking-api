@@ -19,5 +19,5 @@ func (s *perm) Can(ctx context.Context, role int, perms int) bool {
 	if !ok {
 		return false
 	}
-	return perms&rolePerms > 0
+	return (perms & rolePerms) == perms
 }
