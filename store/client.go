@@ -1,0 +1,65 @@
+package store
+
+import (
+	"banking/core/model"
+	"banking/db/pg"
+	"context"
+	"fmt"
+)
+
+type Client interface {
+	GetByEmail(ctx context.Context, email string) (*model.Client, error)
+	Create(ctx context.Context, cli *model.Client) error
+}
+
+type client struct {
+	pgcli *pg.Client
+}
+
+func NewClient(cli *pg.Client) Client {
+	return &client{cli}
+}
+
+func (s *client) GetByEmail(ctx context.Context, email string) (*model.Client, error) {
+	row := s.pgcli.DB().QueryRowContext(
+		ctx,
+		"SELECT id, role, first_name, last_name, birth_date, email, phone, password, is_partner, created_at FROM clients WHERE email = $1",
+		email,
+	)
+	var c model.Client
+	err := row.Scan(
+		&c.ID,
+		&c.Role,
+		&c.FirstName,
+		&c.LastName,
+		&c.BirthDate,
+		&c.Email,
+		&c.Phone,
+		&c.Password,
+		&c.IsPartner,
+		&c.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("scan client row: %w", err)
+	}
+	return &c, nil
+}
+
+func (s *client) Create(ctx context.Context, cli *model.Client) error {
+	row := s.pgcli.DB().QueryRowContext(
+		ctx,
+		"INSERT INTO clients(role, first_name, last_name, birth_date, email, phone, password, is_partner) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id, created_at",
+		cli.Role,
+		cli.FirstName,
+		cli.LastName,
+		cli.BirthDate,
+		cli.Email,
+		cli.Phone,
+		cli.Password,
+		cli.IsPartner,
+	)
+	if err := row.Scan(&cli.ID, &cli.CreatedAt); err != nil {
+		return fmt.Errorf("scan client row: %w", err)
+	}
+	return nil
+}

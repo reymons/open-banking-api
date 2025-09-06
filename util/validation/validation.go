@@ -5,9 +5,9 @@ import (
 )
 
 type Validator interface {
-    // Validates an object and returns an error map
+    // Validates an object and returns a problems' map
     // If len(map) > 0, the object is invalid
-    Valid() map[string]string
+    Valid() (problems map[string]string)
 }
 
 type err struct {}

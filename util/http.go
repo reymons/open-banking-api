@@ -1,8 +1,10 @@
-package httputils 
+package util
 
 import (
-    "encoding/json"
-    "banking/lib/validation"
+	"banking/util/validation"
+	"encoding/json"
+	"fmt"
+	"net/http"
 )
 
 // Decodes an http body and validates it.
@@ -16,19 +18,24 @@ import (
 // Example:
 //
 // body, ok := DecodeBody[MyBody](w, req)
-// if !ok {
-//     return
-// }
+//
+//	if !ok {
+//	    return
+//	}
+//
 // Do something with the body, etc.
-func DecodeBody[T validation.Validator](w http.ResponseWriter, req *http.Request) (T, error) {
-    var v T
+func DecodeBody[T validation.Validator](w http.ResponseWriter, req *http.Request) (T, bool) {
+	var v T
 	if err := json.NewDecoder(req.Body).Decode(&v); err != nil {
-        return v, err
+        http.Error(w, err.Error(), http.StatusBadRequest)
+		return v, false
 	}
 	if problems := v.Valid(); len(problems) > 0 {
-        return v, fmt.Errorf("invalid payload")
+        // TODO: concat problems into a string
+        http.Error(w, "invalid payload", http.StatusBadRequest)
+		return v, false
 	}
-	return v, nil
+	return v, true
 }
 
 // JSON-Encodes a body and automatically writes its contents to the response
@@ -42,4 +49,3 @@ func EncodeBody[T any](w http.ResponseWriter, status int, v T) error {
 	}
 	return nil
 }
-
