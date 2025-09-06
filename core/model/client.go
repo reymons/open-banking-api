@@ -1,13 +1,10 @@
 package model
 
-import (
-	"banking/core/security"
-	"time"
-)
+import "time"
 
 type Client struct {
-	ID        int64
-	Role      security.Role
+	ID        int
+	Role      int
 	FirstName string
 	LastName  string
 	BirthDate time.Time

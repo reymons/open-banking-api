@@ -15,7 +15,7 @@ func (signInReq) Valid() map[string]string {
 }
 
 type signInRes struct {
-	ID        int64  `json:"id"`
+	ID        int    `json:"id"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
@@ -36,7 +36,7 @@ func (r signUpReq) Valid() map[string]string {
 }
 
 type signUpRes struct {
-	ID        int64  `json:"id"`
+	ID        int    `json:"id"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
 	Email     string `json:"email"`

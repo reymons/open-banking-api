@@ -1,7 +1,6 @@
 package util
 
 import (
-	"banking/core/security"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -23,16 +22,16 @@ func SetJwtSecret(secret string) {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	ID   int64         `json:"id"`
-	Role security.Role `json:"role"`
+	ID   int `json:"id"`
+	Role int `json:"role"`
 }
 
 type JwtUser struct {
-	ID   int64
-	Role security.Role
+	ID   int
+	Role int
 }
 
-func CreateJwtToken(duration time.Duration, userID int64, role security.Role) (string, error) {
+func CreateJwtToken(duration time.Duration, userID int, role int) (string, error) {
 	tokenID, err := uuid.NewRandom()
 	if err != nil {
 		return "", fmt.Errorf("create jwt token: %w", err)
@@ -43,7 +42,7 @@ func CreateJwtToken(duration time.Duration, userID int64, role security.Role) (s
 		Role: role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        tokenID.String(),
-			Subject:   strconv.FormatInt(userID, 10),
+			Subject:   strconv.Itoa(userID),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 		},

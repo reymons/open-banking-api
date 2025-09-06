@@ -20,7 +20,7 @@ func (r *reader) Read(dst []byte) (int, error) {
 }
 
 type reqBody struct {
-	ID   int64           `json:"id"`
+	ID   int             `json:"id"`
 	Name string          `json:"name"`
 	Nums []int           `json:"nums"`
 	Map  map[string]bool `json:"map"`
