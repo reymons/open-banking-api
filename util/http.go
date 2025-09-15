@@ -27,12 +27,12 @@ import (
 func DecodeBody[T validation.Validator](w http.ResponseWriter, req *http.Request) (T, bool) {
 	var v T
 	if err := json.NewDecoder(req.Body).Decode(&v); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return v, false
 	}
 	if problems := v.Valid(); len(problems) > 0 {
-        // TODO: concat problems into a string
-        http.Error(w, "invalid payload", http.StatusBadRequest)
+		// TODO: concat problems into a string
+		http.Error(w, "invalid payload", http.StatusBadRequest)
 		return v, false
 	}
 	return v, true
@@ -49,3 +49,4 @@ func EncodeBody[T any](w http.ResponseWriter, status int, v T) error {
 	}
 	return nil
 }
+
