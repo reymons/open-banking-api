@@ -1,12 +1,11 @@
 package service
 
 import (
+	"banking/core"
 	"banking/core/model"
-	"banking/core/security"
 	"banking/store"
 	"banking/util"
 	"context"
-	"errors"
 	"fmt"
 	"time"
 )
@@ -43,10 +42,10 @@ func (s *auth) SignIn(
 ) (*model.Client, error) {
 	cli, err := s.clientStore.GetByEmail(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("get client by email: %w", err)
+		return nil, fmt.Errorf("get client by email: %w", core.ErrInvalidCredentials)
 	}
 	if !util.VerifyPassword(password, cli.Password) {
-		return nil, errors.New("invalid email or password")
+		return nil, fmt.Errorf("verify password: %w", core.ErrInvalidCredentials)
 	}
 	return cli, nil
 }
@@ -65,7 +64,7 @@ func (s *auth) SignUp(
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 	cli := &model.Client{
-		Role:      security.RoleClient,
+		Role:      core.RoleClient,
 		FirstName: firstName,
 		LastName:  lastName,
 		BirthDate: birthDate,

@@ -4,7 +4,6 @@ import (
 	"banking/core/model"
 	"banking/db/pg"
 	"context"
-	"fmt"
 )
 
 type Client interface {
@@ -40,7 +39,7 @@ func (s *client) GetByEmail(ctx context.Context, email string) (*model.Client, e
 		&c.CreatedAt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("scan client row: %w", err)
+		return nil, newCoreError("scan client row", err)
 	}
 	return &c, nil
 }
@@ -59,7 +58,7 @@ func (s *client) Create(ctx context.Context, cli *model.Client) error {
 		cli.IsPartner,
 	)
 	if err := row.Scan(&cli.ID, &cli.CreatedAt); err != nil {
-		return fmt.Errorf("scan client row: %w", err)
+		return newCoreError("scan client row", err)
 	}
 	return nil
 }

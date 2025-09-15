@@ -26,12 +26,13 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, req *http.Request) {
 		body.Password,
 	)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusForbidden)
+		sendHttpError(w, req, "sign in", err)
 		return
 	}
+
 	accessToken, err := util.CreateJwtToken(util.AccessTokenDuration, cli.ID, cli.Role)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendHttpError(w, req, "create jwt token", err)
 		return
 	}
 
@@ -63,12 +64,13 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, req *http.Request) {
 		body.Password,
 	)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusForbidden)
+		sendHttpError(w, req, "sign up", err)
 		return
 	}
+
 	accessToken, err := util.CreateJwtToken(util.AccessTokenDuration, cli.ID, cli.Role)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		sendHttpError(w, req, "create jwt token", err)
 		return
 	}
 

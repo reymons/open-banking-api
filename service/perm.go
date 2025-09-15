@@ -1,7 +1,7 @@
 package service
 
 import (
-	"banking/core/security"
+	"banking/core"
 	"context"
 )
 
@@ -9,13 +9,17 @@ type Perm interface {
 	Can(ctx context.Context, role int, perms int) bool
 }
 
-type perm struct{}
+type permService struct{}
+
+func NewPerm() Perm {
+	return &permService{}
+}
 
 // TODO:
-// later, when we need to modify role permissions and
+// Later, when we need to modify role permissions and
 // add new roles at runtime, store perms in DB
-func (s *perm) Can(ctx context.Context, role int, perms int) bool {
-	rolePerms, ok := security.RolePermsMap[role]
+func (s *permService) Can(ctx context.Context, role int, perms int) bool {
+	rolePerms, ok := core.GetRolePerms(role)
 	if !ok {
 		return false
 	}

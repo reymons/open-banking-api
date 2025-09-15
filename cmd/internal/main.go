@@ -16,14 +16,6 @@ import (
 	"os"
 )
 
-type body struct {
-	ID int `json:id"`
-}
-
-func (body) Valid() map[string]string {
-	return map[string]string{}
-}
-
 func main() {
 	var (
 		dbUrl     = os.Getenv("DB_URL")
@@ -52,7 +44,6 @@ func main() {
 	accountService := service.NewAccount(permService, accountStore)
 	// Handlers
 	authHandler := rest.NewAuthHandler(authService)
-	clientHandler := rest.NewClientHandler()
 	accountHandler := rest.NewAccountHandler(accountService)
 
 	// Initialize server
@@ -61,7 +52,6 @@ func main() {
 	// Add routes
 	mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
 	mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
-	mux.HandleFunc("GET /api/v1/clients", auth.Middleware(clientHandler.GetAll))
 	mux.HandleFunc("GET /api/v1/accounts", auth.Middleware(accountHandler.GetAll))
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
 
