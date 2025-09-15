@@ -14,7 +14,7 @@ func Middleware(
 	return func(w http.ResponseWriter, req *http.Request) {
 		tokenCookie, err := req.Cookie(util.AccessTokenCookie)
 		if err != nil {
-			http.Error(w, "no access token cookie", http.StatusUnauthorized)
+			http.Error(w, "", http.StatusUnauthorized)
 			return
 		}
 		claims, err := util.VerifyJwtToken(tokenCookie.Value)
