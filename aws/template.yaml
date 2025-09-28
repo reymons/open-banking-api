@@ -62,8 +62,10 @@ Resources:
           Value: rest_api
       UserData: !Base64 |
         #!/bin/sh
-        yum update -y
-        yum install -y docker
+        sudo yum update -y
+        sudo yum install -y docker
+        sudo systemctl start docker.service
         echo "set relativenumber" >> ~/.vimrc
         echo "set shiftwidth=4" >> ~/.vimrc
         echo "set tabstop=4" >> ~/.vimrc
+        sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-$(uname -m) -o /usr/bin/docker-compose && sudo chmod 755 /usr/bin/docker-compose && docker-compose --version 
