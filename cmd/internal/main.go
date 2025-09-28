@@ -21,7 +21,7 @@ func main() {
 		dbUrl     = os.Getenv("DB_URL")
 		servHost  = os.Getenv("SERVER_HOST")
 		servPort  = os.Getenv("SERVER_PORT")
-		jwtSecret = os.Getenv("JWT_SERCERT")
+		jwtSecret = os.Getenv("JWT_SECRET")
 	)
 
 	// Initialize database
@@ -36,22 +36,24 @@ func main() {
 
 	// Initialize dependencies
 	// Stores
-	clientStore := store.NewClient(pgcli)
+	//clientStore := store.NewClient(pgcli)
 	accountStore := store.NewAccount(pgcli)
 	// Services
 	permService := service.NewPerm()
-	authService := service.NewAuth(clientStore)
+	//authService := service.NewAuth(clientStore)
 	accountService := service.NewAccount(permService, accountStore)
 	// Handlers
-	authHandler := rest.NewAuthHandler(authService)
+	//authHandler := rest.NewAuthHandler(authService)
 	accountHandler := rest.NewAccountHandler(accountService)
+	healthcheckHandler := rest.NewHealthcheckHandler(pgcli)
 
 	// Initialize server
 	mux := http.NewServeMux()
 
 	// Add routes
-	mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
-	mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
+	mux.HandleFunc("GET /api/healthcheck", healthcheckHandler.Run)
+	//mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
+	//mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
 	mux.HandleFunc("GET /api/v1/accounts", auth.Middleware(accountHandler.GetAll))
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
 
@@ -61,8 +63,7 @@ func main() {
 	h = middleware.CORS(h, middleware.CORSConfig{
 		Credentials: true,
 		Origins: []string{
-			"http://localhost:6969",
-			"http://localhost:7171",
+			"https://reymons.net",
 		},
 		MaxAge: 300, // 5 min
 	})
