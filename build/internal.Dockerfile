@@ -7,6 +7,5 @@ COPY . .
 RUN make build-internal
 
 FROM base AS final
-COPY --from=build /app/internal.bin .
-CMD ["./internal.bin"]
-
+COPY --from=build /app/bin/internal .
+CMD ["./internal"]
