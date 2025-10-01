@@ -17,18 +17,28 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
 
 func main() {
+	// Get env variables
 	var (
-		dbUrl              = os.Getenv("DB_URL")
-		servHost           = os.Getenv("SERVER_HOST")
-		servPort           = os.Getenv("SERVER_PORT")
-		jwtSecret          = os.Getenv("JWT_SERCERT")
+		servHost  = os.Getenv("SERVER_HOST")
+		servPort  = os.Getenv("SERVER_PORT")
+		jwtSecret = os.Getenv("JWT_SERCERT")
+		dbUrl     = fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+			os.Getenv("DB_USER"),
+			url.QueryEscape(os.Getenv("DB_PASSWORD")),
+			os.Getenv("DB_HOST"),
+			os.Getenv("DB_PORT"),
+			os.Getenv("DB_NAME"),
+		)
 	)
 
+	// Seed random
 	rand.Seed(time.Now().UnixNano())
 
 	// Initialize AWS
