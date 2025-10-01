@@ -1,10 +1,9 @@
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
     id serial,
     role smallint NOT NULL DEFAULT 1, -- Client role
     first_name varchar(50) NOT NULL,
     last_name varchar(50) NOT NULL,
     birth_date date NOT NULL,
-    phone varchar(50) NOT NULL,
     email varchar(50) NOT NULL,
     password varchar(512) NOT NULL,
     is_partner bool DEFAULT FALSE,
@@ -12,6 +11,5 @@ CREATE TABLE clients (
 
     PRIMARY KEY (id),
     UNIQUE (email),
-    UNIQUE (phone),
     CHECK (birth_date < NOW())
 );
