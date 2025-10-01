@@ -41,10 +41,6 @@ Resources:
           ToPort: 80
           CidrIp: !Ref IP
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref IP
-        - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           CidrIp: !Ref IP

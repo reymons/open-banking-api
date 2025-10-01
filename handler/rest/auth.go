@@ -43,7 +43,6 @@ func (h *AuthHandler) SignIn(w http.ResponseWriter, req *http.Request) {
 		FirstName: cli.FirstName,
 		LastName:  cli.LastName,
 		Email:     cli.Email,
-		Phone:     cli.Phone,
 	}
 	util.EncodeBody(w, http.StatusOK, &res)
 }
@@ -54,17 +53,45 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	cli, err := h.authService.SignUp(
+	err := h.authService.SignUp(
 		req.Context(),
 		body.FirstName,
 		body.LastName,
 		body.BirthDate,
 		body.Email,
-		body.Phone,
 		body.Password,
 	)
 	if err != nil {
 		sendHttpError(w, req, "sign up", err)
+		return
+	}
+}
+
+func (h *AuthHandler) SendVerificationCode(w http.ResponseWriter, req *http.Request) {
+	body, ok := util.DecodeBody[sendVerificationCodeReq](w, req)
+	if !ok {
+		return
+	}
+
+	err := h.authService.SendVerificationCode(req.Context(), body.Email)
+	if err != nil {
+		sendHttpError(w, req, "send verification code", err)
+	}
+}
+
+func (h *AuthHandler) SubmitVerification(w http.ResponseWriter, req *http.Request) {
+	body, ok := util.DecodeBody[submitVerificationReq](w, req)
+	if !ok {
+		return
+	}
+
+	cli, err := h.authService.SubmitVerification(
+		req.Context(),
+		body.Email,
+		body.Code,
+	)
+	if err != nil {
+		sendHttpError(w, req, "submit verification", err)
 		return
 	}
 
@@ -76,12 +103,12 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, req *http.Request) {
 
 	util.SetJwtTokenCookie(w, util.AccessTokenCookie, accessToken, util.AccessTokenDuration)
 
-	res := signUpRes{
+	res := submitVerificationRes{
 		ID:        cli.ID,
 		FirstName: cli.FirstName,
 		LastName:  cli.LastName,
 		Email:     cli.Email,
-		Phone:     cli.Phone,
+		BirthDate: cli.BirthDate,
 	}
 	util.EncodeBody(w, http.StatusOK, &res)
 }

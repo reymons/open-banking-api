@@ -29,6 +29,10 @@ func sendHttpError(
 		http.Error(w, "", http.StatusForbidden)
 	case errors.Is(err, core.ErrInvalidCredentials):
 		http.Error(w, "Invalid credentials", http.StatusBadRequest)
+	case errors.Is(err, core.ErrVerificationCodeExpired):
+		http.Error(w, "Verification code has expired", http.StatusBadRequest)
+	case errors.Is(err, core.ErrInvalidVerificationCode):
+		http.Error(w, "Invalid verification code", http.StatusBadRequest)
 	default:
 		http.Error(w, "", http.StatusInternalServerError)
 		log.Printf(

@@ -10,19 +10,35 @@ import (
 	"banking/service"
 	"banking/store"
 	"banking/util"
+	"context"
 	"fmt"
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
 	var (
-		dbUrl     = os.Getenv("DB_URL")
-		servHost  = os.Getenv("SERVER_HOST")
-		servPort  = os.Getenv("SERVER_PORT")
-		jwtSecret = os.Getenv("JWT_SECRET")
+		dbUrl              = os.Getenv("DB_URL")
+		servHost           = os.Getenv("SERVER_HOST")
+		servPort           = os.Getenv("SERVER_PORT")
+		jwtSecret          = os.Getenv("JWT_SERCERT")
 	)
+
+	rand.Seed(time.Now().UnixNano())
+
+	// Initialize AWS
+	awsCfgUSEast1, err := awsConfig.LoadDefaultConfig(
+		context.TODO(),
+		awsConfig.WithRegion("us-east-1"), // SES works only in this region
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Initialize database
 	pgcli, err := pg.NewClient(dbUrl)
@@ -35,15 +51,20 @@ func main() {
 	util.SetJwtSecret(jwtSecret)
 
 	// Initialize dependencies
+	// AWS
+	sesClient := ses.NewFromConfig(awsCfgUSEast1)
 	// Stores
-	//clientStore := store.NewClient(pgcli)
+	clientStore := store.NewClient(pgcli)
 	accountStore := store.NewAccount(pgcli)
+	verifStore := store.NewVerification()
+	emailVerifStore := store.NewEmailVerification(pgcli, verifStore)
 	// Services
 	permService := service.NewPerm()
-	//authService := service.NewAuth(clientStore)
+	emailService := service.NewEmailService(sesClient)
+	authService := service.NewAuth(clientStore, emailVerifStore, emailService)
 	accountService := service.NewAccount(permService, accountStore)
 	// Handlers
-	//authHandler := rest.NewAuthHandler(authService)
+	authHandler := rest.NewAuthHandler(authService)
 	accountHandler := rest.NewAccountHandler(accountService)
 	healthcheckHandler := rest.NewHealthcheckHandler(pgcli)
 
@@ -52,8 +73,10 @@ func main() {
 
 	// Add routes
 	mux.HandleFunc("GET /api/healthcheck", healthcheckHandler.Run)
-	//mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
-	//mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
+	mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
+	mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
+	mux.HandleFunc("POST /api/v1/auth/verification", authHandler.SubmitVerification)
+	mux.HandleFunc("POST /api/v1/auth/verification/code", authHandler.SendVerificationCode)
 	mux.HandleFunc("GET /api/v1/accounts", auth.Middleware(accountHandler.GetAll))
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
 
@@ -63,7 +86,7 @@ func main() {
 	h = middleware.CORS(h, middleware.CORSConfig{
 		Credentials: true,
 		Origins: []string{
-			"https://reymons.net",
+			"http://localhost:7000",
 		},
 		MaxAge: 300, // 5 min
 	})

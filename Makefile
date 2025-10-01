@@ -39,8 +39,7 @@ migrate-open-banking:
 .PHONY: docker-upp-all docker-down-all
 
 docker-up-all:
-	docker compose -f build/docker-compose.yml --env-file .env up --build -d
+	docker compose -f build/docker-compose.yml up --build -d
 
 docker-down-all:
-	docker compose -f docker-compose.yml --env-file .env down
-
+	docker compose -f build/docker-compose.yml down

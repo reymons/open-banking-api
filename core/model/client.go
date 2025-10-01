@@ -8,7 +8,6 @@ type Client struct {
 	FirstName string
 	LastName  string
 	BirthDate time.Time
-	Phone     string
 	Email     string
 	Password  string
 	IsPartner bool
