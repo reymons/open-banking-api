@@ -28,6 +28,7 @@ func main() {
 		servHost  = os.Getenv("SERVER_HOST")
 		servPort  = os.Getenv("SERVER_PORT")
 		jwtSecret = os.Getenv("JWT_SERCERT")
+		appEnv    = os.Getenv("APP_ENV")
 		dbUrl     = fmt.Sprintf(
 			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			os.Getenv("DB_USER"),
@@ -37,6 +38,8 @@ func main() {
 			os.Getenv("DB_NAME"),
 		)
 	)
+
+	log.Printf("Running the application in the %s environment", appEnv)
 
 	// Seed random
 	rand.Seed(time.Now().UnixNano())
@@ -91,14 +94,17 @@ func main() {
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
 
 	// Add middlewares
+	allowedOrigins := []string{"https://reymons.net"}
+	if appEnv == "development" {
+		allowedOrigins = append(allowedOrigins, "http://localhost:7000")
+	}
+
 	h := http.Handler(mux)
 	h = middleware.Logger(h)
 	h = middleware.CORS(h, middleware.CORSConfig{
 		Credentials: true,
-		Origins: []string{
-			"http://localhost:7000",
-		},
-		MaxAge: 300, // 5 min
+		Origins:     allowedOrigins,
+		MaxAge:      300, // 5 min
 	})
 
 	// Run server

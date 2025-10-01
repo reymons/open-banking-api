@@ -60,6 +60,7 @@ jobs:
     needs: build
     environment: production
     env:
+      APP_ENV: ${{ vars.APP_ENV }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_REGISTRY: ${{ secrets.AWS_REGISTRY }}
@@ -110,6 +111,7 @@ jobs:
           echo AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID >> $env_file
           echo AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY >> $env_file
           echo AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION >> $env_file
+          echo APP_ENV=$APP_ENV >> $env_file
           echo env_file=$env_file >> $GITHUB_OUTPUT
       - name: Deploy
         env:
