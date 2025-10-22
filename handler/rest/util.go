@@ -33,6 +33,8 @@ func sendHttpError(
 		http.Error(w, "Verification code has expired", http.StatusBadRequest)
 	case errors.Is(err, core.ErrInvalidVerificationCode):
 		http.Error(w, "Invalid verification code", http.StatusBadRequest)
+	case errors.Is(err, core.ErrEmailTaken):
+		http.Error(w, "The email address is already taken", http.StatusBadRequest)
 	default:
 		http.Error(w, "", http.StatusInternalServerError)
 		log.Printf(

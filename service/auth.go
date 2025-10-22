@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	CodeDuration = time.Minute * 10
+	CodeDuration = time.Minute * 5
 	CodeLength   = 6
 )
 
@@ -72,7 +72,20 @@ func (s *auth) SignIn(
 	return cli, nil
 }
 
+func getCodeExpiryDate() time.Time {
+	return time.Now().Add(CodeDuration)
+}
+
+// If a user already exists, return an error.
+// If not, then:
+//
+// 1) if there's no code yet, send it
+// 2) if code exists but it's expired, send a new one
+// 3) if code exists but it's not expired, do nothing and return from the func with a successa
+// 4) If there's some other error, return it and do not send a code
+
 // Sends a verification code to the user's email
+// and temporarily stores user's data in the database
 func (s *auth) SignUp(
 	ctx context.Context,
 	firstName string,
@@ -81,6 +94,19 @@ func (s *auth) SignUp(
 	email string,
 	password string,
 ) error {
+	if s.clientStore.ExistsByEmail(ctx, email) {
+		return core.ErrEmailTaken
+	}
+
+	verif, err := s.emailVerifStore.GetByEmail(ctx, email)
+	if err == nil && !verif.Expired() {
+		return nil
+	}
+
+	if err != nil && !errors.Is(err, core.ErrResourceNotFound) {
+		return fmt.Errorf("get verification by email: %w", err)
+	}
+
 	hashedPassword, err := util.HashPassword(password)
 	if err != nil {
 		return fmt.Errorf("hash password: %w", err)
@@ -91,9 +117,9 @@ func (s *auth) SignUp(
 		return fmt.Errorf("generate code: %w", err)
 	}
 
-	verif := model.EmailVerification{
+	verif = &model.EmailVerification{
 		Code:      code,
-		ExpiresAt: time.Now().Add(CodeDuration),
+		ExpiresAt: getCodeExpiryDate(),
 		User: model.EmailVerificationUser{
 			FirstName: firstName,
 			LastName:  lastName,
@@ -103,7 +129,7 @@ func (s *auth) SignUp(
 		},
 	}
 
-	if err := s.emailVerifStore.Create(ctx, &verif); err != nil {
+	if err := s.emailVerifStore.Create(ctx, verif); err != nil {
 		return fmt.Errorf("create verification: %w", err)
 	}
 
@@ -124,21 +150,39 @@ func (s *auth) sendVerificationCode(ctx context.Context, email string, code stri
 }
 
 func (s *auth) SendVerificationCode(ctx context.Context, email string) error {
+	if s.clientStore.ExistsByEmail(ctx, email) {
+		return core.ErrEmailTaken
+	}
+
 	verif, err := s.emailVerifStore.GetByEmail(ctx, email)
 	if err != nil {
 		return fmt.Errorf("get verification: %w", err)
 	}
+
+	if verif.Expired() {
+		code, err := generateCode(CodeLength)
+		if err != nil {
+			return fmt.Errorf("generate code: %w", err)
+		}
+
+		verif.Code = code
+		verif.ExpiresAt = getCodeExpiryDate()
+
+		if err := s.emailVerifStore.Create(ctx, verif); err != nil {
+			return fmt.Errorf("create verification: %w", err)
+		}
+	}
+
 	return s.sendVerificationCode(ctx, email, verif.Code)
 }
 
 func (s *auth) SubmitVerification(ctx context.Context, email string, code string) (*model.Client, error) {
-	verif, err := s.emailVerifStore.GetByEmail(ctx, email)
+	verif, err := s.emailVerifStore.Get(ctx, email, code)
 	if err != nil {
+		if errors.Is(err, core.ErrResourceNotFound) {
+			return nil, core.ErrInvalidVerificationCode
+		}
 		return nil, fmt.Errorf("get verification: %w", err)
-	}
-
-	if verif.Code != code {
-		return nil, core.ErrInvalidVerificationCode
 	}
 
 	if verif.Expired() {
@@ -155,10 +199,6 @@ func (s *auth) SubmitVerification(ctx context.Context, email string, code string
 	}
 	if err := s.clientStore.Create(ctx, cli); err != nil {
 		return nil, fmt.Errorf("create client: %w", err)
-	}
-
-	if err := s.emailVerifStore.Delete(ctx, email, code); err != nil {
-		return nil, fmt.Errorf("delete verification: %w", err)
 	}
 
 	return cli, nil

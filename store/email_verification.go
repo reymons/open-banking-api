@@ -10,7 +10,7 @@ import (
 type EmailVerification interface {
 	Create(ctx context.Context, v *model.EmailVerification) error
 	GetByEmail(ctx context.Context, email string) (*model.EmailVerification, error)
-	Delete(ctx context.Context, email string, code string) error
+	Get(ctx context.Context, email string, code string) (*model.EmailVerification, error)
 }
 
 type emailVerification struct {
@@ -56,7 +56,22 @@ func (s *emailVerification) GetByEmail(ctx context.Context, email string) (*mode
 	return &res, nil
 }
 
-func (s *emailVerification) Delete(ctx context.Context, email string, code string) error {
-	err := s.verifStore.Delete(ctx, s.pgcli.DB(), email, code)
-	return newCoreError("delete", err)
+func (s *emailVerification) Get(
+	ctx context.Context,
+	email string,
+	code string,
+) (*model.EmailVerification, error) {
+	v, err := s.verifStore.Get(ctx, s.pgcli.DB(), email, code)
+	if err != nil {
+		return nil, newCoreError("get verification", err)
+	}
+
+	res := model.EmailVerification{
+		Code:      v.Code,
+		ExpiresAt: v.ExpiresAt,
+	}
+	if err := json.Unmarshal(v.Data, &res.User); err != nil {
+		return nil, err
+	}
+	return &res, nil
 }

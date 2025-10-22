@@ -8,7 +8,9 @@ import (
 
 type Client interface {
 	GetByEmail(ctx context.Context, email string) (*model.Client, error)
+	GetByID(ctx context.Context, id int) (*model.Client, error)
 	Create(ctx context.Context, cli *model.Client) error
+	ExistsByEmail(ctx context.Context, email string) bool
 }
 
 type client struct {
@@ -24,6 +26,30 @@ func (s *client) GetByEmail(ctx context.Context, email string) (*model.Client, e
 		ctx,
 		"SELECT id, role, first_name, last_name, birth_date, email, password, is_partner, created_at FROM clients WHERE email = $1",
 		email,
+	)
+	var c model.Client
+	err := row.Scan(
+		&c.ID,
+		&c.Role,
+		&c.FirstName,
+		&c.LastName,
+		&c.BirthDate,
+		&c.Email,
+		&c.Password,
+		&c.IsPartner,
+		&c.CreatedAt,
+	)
+	if err != nil {
+		return nil, newCoreError("scan client row", err)
+	}
+	return &c, nil
+}
+
+func (s *client) GetByID(ctx context.Context, id int) (*model.Client, error) {
+	row := s.pgcli.DB().QueryRowContext(
+		ctx,
+		"SELECT id, role, first_name, last_name, birth_date, email, password, is_partner, created_at FROM clients WHERE id = $1",
+		id,
 	)
 	var c model.Client
 	err := row.Scan(
@@ -61,11 +87,11 @@ func (s *client) Create(ctx context.Context, cli *model.Client) error {
 	return nil
 }
 
-func (s *client) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+func (s *client) ExistsByEmail(ctx context.Context, email string) bool {
 	row := s.pgcli.DB().QueryRowContext(ctx, "SELECT count(1) FROM clients WHERE email = $1", email)
 	var count int
 	if err := row.Scan(&count); err != nil {
-		return false, newCoreError("scan client row", err)
+		return false
 	}
-	return count > 0, nil
+	return count > 0
 }

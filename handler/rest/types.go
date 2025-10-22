@@ -60,6 +60,15 @@ func (sendVerificationCodeReq) Valid() map[string]string {
 	return map[string]string{}
 }
 
+// User
+type getUserMeRes struct {
+	ID        int       `json:"id"`
+	Email     string    `json:"email"`
+	BirthDate time.Time `json:"birthDate"`
+	FirstName string    `json:"firstName"`
+	LastName  string    `json:"lastName"`
+}
+
 // Account
 type requestAccReq struct {
 	Currency string `json:"currency"`

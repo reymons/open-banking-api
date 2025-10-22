@@ -19,17 +19,18 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
 func main() {
 	// Get env variables
 	var (
-		servHost  = os.Getenv("SERVER_HOST")
-		servPort  = os.Getenv("SERVER_PORT")
-		jwtSecret = os.Getenv("JWT_SERCERT")
-		appEnv    = os.Getenv("APP_ENV")
-		dbUrl     = fmt.Sprintf(
+		servHost       = os.Getenv("SERVER_HOST")
+		servPort       = os.Getenv("SERVER_PORT")
+		jwtSecret      = os.Getenv("JWT_SERCERT")
+		allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
+		dbUrl          = fmt.Sprintf(
 			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 			os.Getenv("DB_USER"),
 			url.QueryEscape(os.Getenv("DB_PASSWORD")),
@@ -38,8 +39,6 @@ func main() {
 			os.Getenv("DB_NAME"),
 		)
 	)
-
-	log.Printf("Running the application in the %s environment", appEnv)
 
 	// Seed random
 	rand.Seed(time.Now().UnixNano())
@@ -77,6 +76,7 @@ func main() {
 	authService := service.NewAuth(clientStore, emailVerifStore, emailService)
 	accountService := service.NewAccount(permService, accountStore)
 	// Handlers
+	userHandler := rest.NewUserHandler(clientStore)
 	authHandler := rest.NewAuthHandler(authService)
 	accountHandler := rest.NewAccountHandler(accountService)
 	healthcheckHandler := rest.NewHealthcheckHandler(pgcli)
@@ -88,23 +88,29 @@ func main() {
 	mux.HandleFunc("GET /api/healthcheck", healthcheckHandler.Run)
 	mux.HandleFunc("POST /api/v1/auth/sign-in", authHandler.SignIn)
 	mux.HandleFunc("POST /api/v1/auth/sign-up", authHandler.SignUp)
+	mux.HandleFunc("DELETE /api/v1/auth/sign-out", authHandler.SignOut)
 	mux.HandleFunc("POST /api/v1/auth/verification", authHandler.SubmitVerification)
 	mux.HandleFunc("POST /api/v1/auth/verification/code", authHandler.SendVerificationCode)
 	mux.HandleFunc("GET /api/v1/accounts", auth.Middleware(accountHandler.GetAll))
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
+	mux.HandleFunc("GET /api/v1/users/me", auth.Middleware(userHandler.GetMe))
 
 	// Add middlewares
-	allowedOrigins := []string{"https://reymons.net"}
-	if appEnv == "development" {
-		allowedOrigins = append(allowedOrigins, "http://localhost:7000")
-	}
-
 	h := http.Handler(mux)
 	h = middleware.Logger(h)
 	h = middleware.CORS(h, middleware.CORSConfig{
 		Credentials: true,
-		Origins:     allowedOrigins,
+		Origins:     strings.Split(allowedOrigins, ","),
 		MaxAge:      300, // 5 min
+		Headers:     []string{"Content-Type"},
+		Methods: []string{
+			http.MethodGet,
+			http.MethodPost,
+			http.MethodHead,
+			http.MethodPatch,
+			http.MethodPut,
+			http.MethodDelete,
+		},
 	})
 
 	// Run server

@@ -15,8 +15,8 @@ type verificationDto struct {
 
 type Verification interface {
 	Create(ctx context.Context, db pg.DB, v *verificationDto) error
-	Delete(ctx context.Context, db pg.DB, target string, code string) error
 	GetByTarget(ctx context.Context, db pg.DB, target string) (*verificationDto, error)
+	Get(ctx context.Context, db pg.DB, target string, code string) (*verificationDto, error)
 }
 
 type verification struct{}
@@ -34,11 +34,6 @@ func (*verification) Create(ctx context.Context, db pg.DB, v *verificationDto) e
 	return newCoreError("insert", err)
 }
 
-func (*verification) Delete(ctx context.Context, db pg.DB, target string, code string) error {
-	_, err := db.ExecContext(ctx, "DELETE FROM verifications WHERE target = $1 AND code = $2", target, code)
-	return newCoreError("delete", err)
-}
-
 func (*verification) GetByTarget(
 	ctx context.Context,
 	db pg.DB,
@@ -46,8 +41,28 @@ func (*verification) GetByTarget(
 ) (*verificationDto, error) {
 	row := db.QueryRowContext(
 		ctx,
-		"SELECT target, data, code, expires_at FROM verifications WHERE target = $1",
+		"SELECT target, data, code, expires_at FROM verifications WHERE target = $1 ORDER BY created_at DESC LIMIT 1",
 		target,
+	)
+	var v verificationDto
+	err := row.Scan(&v.Target, &v.Data, &v.Code, &v.ExpiresAt)
+	if err != nil {
+		return nil, newCoreError("scan verification", err)
+	}
+	return &v, nil
+}
+
+func (*verification) Get(
+	ctx context.Context,
+	db pg.DB,
+	target string,
+	code string,
+) (*verificationDto, error) {
+	row := db.QueryRowContext(
+		ctx,
+		"SELECT target, data, code, expires_at FROM verifications WHERE target = $1 AND code = $2 ORDER BY created_at DESC LIMIT 1",
+		target,
+		code,
 	)
 	var v verificationDto
 	err := row.Scan(&v.Target, &v.Data, &v.Code, &v.ExpiresAt)

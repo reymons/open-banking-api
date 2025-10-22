@@ -67,6 +67,11 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (h *AuthHandler) SignOut(w http.ResponseWriter, req *http.Request) {
+	util.SetJwtTokenCookie(w, util.AccessTokenCookie, "", 0);
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *AuthHandler) SendVerificationCode(w http.ResponseWriter, req *http.Request) {
 	body, ok := util.DecodeBody[sendVerificationCodeReq](w, req)
 	if !ok {

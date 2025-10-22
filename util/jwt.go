@@ -11,7 +11,7 @@ import (
 
 const (
 	AccessTokenCookie   = "accessToken"
-	AccessTokenDuration = 1 * 24 * time.Hour // 1 day
+	AccessTokenDuration = 30 * time.Minute
 )
 
 var jwtSecret string
