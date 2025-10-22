@@ -16,6 +16,7 @@ CREATE TABLE verifications (
     data jsonb NOT NULL, -- any data that needs to be proccessed after validation
     code varchar(10) NOT NULL, -- any verification code from 1 to 10 characters
     expires_at timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT NOW(),
 
     UNIQUE (target, code),
     CHECK (char_length(code) > 0),
