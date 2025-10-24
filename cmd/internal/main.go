@@ -72,7 +72,7 @@ func main() {
 	emailVerifStore := store.NewEmailVerification(pgcli, verifStore)
 	// Services
 	permService := service.NewPerm()
-	emailService := service.NewEmailService(sesClient)
+	emailService := service.NewEmailService(sesClient, "noreply@reymons.net", "Open Banking")
 	authService := service.NewAuth(clientStore, emailVerifStore, emailService)
 	accountService := service.NewAccount(permService, accountStore)
 	// Handlers

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ses"
 	"github.com/aws/aws-sdk-go-v2/service/ses/types"
@@ -18,28 +19,29 @@ type EmailService interface {
 }
 
 type emailService struct {
-	sesClient *ses.Client
+	sesClient   *ses.Client
+	email       string
+	titlePrefix string
 }
 
-func NewEmailService(sc *ses.Client) EmailService {
-	return &emailService{sc}
+func NewEmailService(sc *ses.Client, email string, titlePrefix string) EmailService {
+	return &emailService{sc, email, titlePrefix}
 }
 
 func (s *emailService) SendMessage(
 	ctx context.Context,
-	src string,
 	addrs []string,
 	subject string,
 	message string,
 ) error {
 	sendEmailInput := &ses.SendEmailInput{
-		Source: aws.String(src),
+		Source: aws.String(s.email),
 		Destination: &types.Destination{
 			ToAddresses: addrs,
 		},
 		Message: &types.Message{
 			Subject: &types.Content{
-				Data: aws.String(subject),
+				Data: aws.String(fmt.Sprintf("%s - %s", s.titlePrefix, subject)),
 			},
 			Body: &types.Body{
 				Html: &types.Content{
