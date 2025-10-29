@@ -27,11 +27,13 @@ services:
     ports:
       - 6969:80
     environment:
-      APP_ENV: ${APP_ENV}
+      APP_NAME: ${APP_NAME}
+      EMAIL_NOREPLY: ${EMAIL_NOREPLY}
       SERVER_HOST: internal
       SERVER_PORT: 80
       JWT_SECRET: ${JWT_SECRET}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      MAIN_WEBSITE_URL: ${MAIN_WEBSITE_URL}
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_USER: ${DB_USER}

@@ -11,6 +11,7 @@ type Client interface {
 	GetByID(ctx context.Context, id int) (*model.Client, error)
 	Create(ctx context.Context, cli *model.Client) error
 	ExistsByEmail(ctx context.Context, email string) bool
+	SetPassword(ctx context.Context, db pg.DB, clientID int, password string) error
 }
 
 type client struct {
@@ -94,4 +95,14 @@ func (s *client) ExistsByEmail(ctx context.Context, email string) bool {
 		return false
 	}
 	return count > 0
+}
+
+func (s *client) SetPassword(ctx context.Context, db pg.DB, clientID int, password string) error {
+	_, err := db.ExecContext(
+		ctx,
+		"UPDATE clients SET password = $1 WHERE id = $2",
+		password,
+		clientID,
+	)
+	return newCoreError("update", err)
 }

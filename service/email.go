@@ -11,7 +11,6 @@ import (
 type EmailService interface {
 	SendMessage(
 		ctx context.Context,
-		src string,
 		addrs []string,
 		subject string,
 		message string,

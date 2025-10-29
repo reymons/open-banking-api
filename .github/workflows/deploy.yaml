@@ -33,8 +33,6 @@ jobs:
     permissions:
       contents: read
     environment: production
-    env:
-      APP_ENV: ${{ vars.APP_ENV }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,9 +40,7 @@ jobs:
         run: |
           img_name=internal
           img_tag=$(openssl rand -hex 16 | openssl dgst -md5 | grep -Eo '[a-f0-9]{32}')
-          docker build -t $img_name:$img_tag \
-            --build-arg APP_ENV=$APP_ENV \
-            -f build/internal.Dockerfile .
+          docker build -t $img_name:$img_tag -f build/internal.Dockerfile .
           artifacts_dir=__artifacts__
           mkdir $artifacts_dir
           docker save -o $artifacts_dir/build_img $img_name:$img_tag
@@ -61,9 +57,11 @@ jobs:
     needs: build
     environment: production
     env:
-      APP_ENV: ${{ vars.APP_ENV }}
+      APP_NAME: ${{ vars.APP_NAME }}
+      EMAIL_NOREPLY: ${{ vars.EMAIL_NOREPLY }}
       ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      MAIN_WEBSITE_URL: ${{ vars.MAIN_WEBSITE_URL }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_REGISTRY: ${{ secrets.AWS_REGISTRY }}
       AWS_REPOSITORY: ${{ secrets.AWS_REPOSITORY }}
@@ -103,7 +101,11 @@ jobs:
         id: env_cfg
         run: |
           env_file=.env.deploy
+          echo APP_NAME=$APP_NAME >> $env_file
           echo JWT_SECRET=$JWT_SECRET >> $env_file
+          echo ALLOWED_ORIGINS=$ALLOWED_ORIGINS >> $env_file
+          echo MAIN_WEBSITE_URL=$MAIN_WEBSITE_URL >> $env_file
+          echo EMAIL_NOREPLY=$EMAIL_NOREPLY >> $env_file
           echo DB_PORT=$DB_PORT >> $env_file
           echo DB_HOST=$DB_HOST >> $env_file
           echo DB_USER=$DB_USER >> $env_file
@@ -113,8 +115,6 @@ jobs:
           echo AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID >> $env_file
           echo AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY >> $env_file
           echo AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION >> $env_file
-          echo APP_ENV=$APP_ENV >> $env_file
-          echo ALLOWED_ORIGINS=$ALLOWED_ORIGINS >> $env_file
           echo env_file=$env_file >> $GITHUB_OUTPUT
       - name: Deploy
         env:

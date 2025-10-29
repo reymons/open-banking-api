@@ -9,4 +9,6 @@ var (
 	ErrVerificationCodeExpired = errors.New("verification code has expired")
 	ErrInvalidVerificationCode = errors.New("invalid verification code")
 	ErrEmailTaken              = errors.New("email is already taken")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrTokenExpired            = errors.New("token expired")
 )

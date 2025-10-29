@@ -90,3 +90,23 @@ type accRes struct {
 type getAllAccsRes struct {
 	Accounts []accRes `json:"accounts"`
 }
+
+// Password
+type resetPswdReq struct {
+	Email string `json:"email"`
+}
+
+func (resetPswdReq) Valid() map[string]string {
+	// TODO: validate
+	return map[string]string{}
+}
+
+type submitResetTokenReq struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+func (submitResetTokenReq) Valid() map[string]string {
+	// TODO: validate
+	return map[string]string{}
+}

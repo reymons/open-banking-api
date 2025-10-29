@@ -142,9 +142,8 @@ func (s *auth) SignUp(
 func (s *auth) sendVerificationCode(ctx context.Context, email string, code string) error {
 	return s.emailService.SendMessage(
 		ctx,
-		"noreply@reymons.net",
 		[]string{email},
-		"Open Banking - Email Address Verification",
+		"Email Address Verification",
 		fmt.Sprintf("Your verification code is <strong>%s</strong>", code),
 	)
 }

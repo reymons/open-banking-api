@@ -8,6 +8,18 @@ import (
 	"net/http"
 )
 
+func logError(err error, prfx string, req *http.Request) {
+	log.Printf(
+		"ERROR: %s - %s %s %s, status: %d, %s\n",
+		req.RemoteAddr,
+		req.Method,
+		req.RequestURI,
+		req.Proto,
+		http.StatusInternalServerError,
+		fmt.Sprintf("%s: %s", prfx, err.Error()),
+	)
+}
+
 // Maps domain (core) errors to HTTP ones and
 // sends them to the client
 //
@@ -35,16 +47,12 @@ func sendHttpError(
 		http.Error(w, "Invalid verification code", http.StatusBadRequest)
 	case errors.Is(err, core.ErrEmailTaken):
 		http.Error(w, "The email address is already taken", http.StatusBadRequest)
+	case errors.Is(err, core.ErrInvalidToken):
+		http.Error(w, "Invalid token", http.StatusBadRequest)
+	case errors.Is(err, core.ErrTokenExpired):
+		http.Error(w, "Token expired", http.StatusBadRequest)
 	default:
 		http.Error(w, "", http.StatusInternalServerError)
-		log.Printf(
-			"ERROR: %s - %s %s %s, status: %d, %s\n",
-			req.RemoteAddr,
-			req.Method,
-			req.RequestURI,
-			req.Proto,
-			http.StatusInternalServerError,
-			fmt.Sprintf("%s: %s", prfx, err.Error()),
-		)
+		logError(err, prfx, req)
 	}
 }

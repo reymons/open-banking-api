@@ -3,6 +3,7 @@
 package main
 
 import (
+	"banking/config"
 	"banking/db/pg"
 	"banking/handler/rest"
 	"banking/middleware"
@@ -17,31 +18,15 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"net/url"
-	"os"
-	"strings"
 	"time"
 )
 
 func main() {
-	// Get env variables
-	var (
-		servHost       = os.Getenv("SERVER_HOST")
-		servPort       = os.Getenv("SERVER_PORT")
-		jwtSecret      = os.Getenv("JWT_SERCERT")
-		allowedOrigins = os.Getenv("ALLOWED_ORIGINS")
-		dbUrl          = fmt.Sprintf(
-			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			os.Getenv("DB_USER"),
-			url.QueryEscape(os.Getenv("DB_PASSWORD")),
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_NAME"),
-		)
-	)
-
 	// Seed random
 	rand.Seed(time.Now().UnixNano())
+
+	// Set up app config
+	appCfg := config.NewInternalConfig()
 
 	// Initialize AWS
 	awsCfgUSEast1, err := awsConfig.LoadDefaultConfig(
@@ -53,14 +38,14 @@ func main() {
 	}
 
 	// Initialize database
-	pgcli, err := pg.NewClient(dbUrl)
+	pgcli, err := pg.NewClient(appCfg.GetDbUrl())
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer pgcli.Close()
 
 	// Prepare utils
-	util.SetJwtSecret(jwtSecret)
+	util.SetJwtSecret(appCfg.GetJwtSecret())
 
 	// Initialize dependencies
 	// AWS
@@ -70,16 +55,19 @@ func main() {
 	accountStore := store.NewAccount(pgcli)
 	verifStore := store.NewVerification()
 	emailVerifStore := store.NewEmailVerification(pgcli, verifStore)
+	resetPswdReqStore := store.NewResetPasswordReq(pgcli)
 	// Services
 	permService := service.NewPerm()
-	emailService := service.NewEmailService(sesClient, "noreply@reymons.net", "Open Banking")
+	emailService := service.NewEmailService(sesClient, appCfg.GetEmailNoreply(), appCfg.GetAppName())
 	authService := service.NewAuth(clientStore, emailVerifStore, emailService)
 	accountService := service.NewAccount(permService, accountStore)
+	passwordService := service.NewPassword(pgcli, emailService, resetPswdReqStore, clientStore, appCfg)
 	// Handlers
 	userHandler := rest.NewUserHandler(clientStore)
 	authHandler := rest.NewAuthHandler(authService)
 	accountHandler := rest.NewAccountHandler(accountService)
 	healthcheckHandler := rest.NewHealthcheckHandler(pgcli)
+	passwordHandler := rest.NewPasswordHandler(passwordService)
 
 	// Initialize server
 	mux := http.NewServeMux()
@@ -94,13 +82,15 @@ func main() {
 	mux.HandleFunc("GET /api/v1/accounts", auth.Middleware(accountHandler.GetAll))
 	mux.HandleFunc("POST /api/v1/accounts", auth.Middleware(accountHandler.Request))
 	mux.HandleFunc("GET /api/v1/users/me", auth.Middleware(userHandler.GetMe))
+	mux.HandleFunc("POST /api/v1/passwords/reset-requests", passwordHandler.RequestPasswordReset)
+	mux.HandleFunc("POST /api/v1/passwords/reset-requests/submit", passwordHandler.ResetPassword)
 
 	// Add middlewares
 	h := http.Handler(mux)
 	h = middleware.Logger(h)
 	h = middleware.CORS(h, middleware.CORSConfig{
 		Credentials: true,
-		Origins:     strings.Split(allowedOrigins, ","),
+		Origins:     appCfg.GetAllowedOrigins(),
 		MaxAge:      300, // 5 min
 		Headers:     []string{"Content-Type"},
 		Methods: []string{
@@ -115,7 +105,7 @@ func main() {
 
 	// Run server
 	serv := http.Server{
-		Addr:    fmt.Sprintf("%s:%s", servHost, servPort),
+		Addr:    fmt.Sprintf("%s:%s", appCfg.GetServerHost(), appCfg.GetServerPort()),
 		Handler: h,
 	}
 
