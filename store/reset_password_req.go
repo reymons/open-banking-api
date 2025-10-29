@@ -24,7 +24,7 @@ func NewResetPasswordReq(cli *pg.Client) ResetPasswordReqStore {
 func (s *resetPasswordReqStore) GetByClientID(ctx context.Context, id int) (*model.ResetPasswordReq, error) {
 	row := s.pgcli.DB().QueryRowContext(
 		ctx,
-		"SELECT client_id, token, expires_at FROM reset_passwords WHERE client_id = $1",
+		"SELECT client_id, token, expires_at FROM reset_password_requests WHERE client_id = $1",
 		id,
 	)
 
@@ -39,7 +39,7 @@ func (s *resetPasswordReqStore) GetByClientID(ctx context.Context, id int) (*mod
 func (s *resetPasswordReqStore) GetByToken(ctx context.Context, token string) (*model.ResetPasswordReq, error) {
 	row := s.pgcli.DB().QueryRowContext(
 		ctx,
-		"SELECT client_id, token, expires_at FROM reset_passwords WHERE token = $1",
+		"SELECT client_id, token, expires_at FROM reset_password_requests WHERE token = $1",
 		token,
 	)
 
@@ -54,7 +54,7 @@ func (s *resetPasswordReqStore) GetByToken(ctx context.Context, token string) (*
 func (s *resetPasswordReqStore) Create(ctx context.Context, m *model.ResetPasswordReq) error {
 	_, err := s.pgcli.DB().ExecContext(
 		ctx,
-		"INSERT INTO reset_passwords(client_id, token, expires_at) VALUES ($1,$2,$3)",
+		"INSERT INTO reset_password_requests(client_id, token, expires_at) VALUES ($1,$2,$3)",
 		m.ClientID,
 		m.Token,
 		m.ExpiresAt,
@@ -66,6 +66,6 @@ func (s *resetPasswordReqStore) Create(ctx context.Context, m *model.ResetPasswo
 }
 
 func (s *resetPasswordReqStore) DeleteByClientID(ctx context.Context, db pg.DB, id int) error {
-	_, err := db.ExecContext(ctx, "DELETE FROM reset_passwords WHERE client_id = $1", id)
+	_, err := db.ExecContext(ctx, "DELETE FROM reset_password_requests WHERE client_id = $1", id)
 	return newCoreError("delete", err)
 }
