@@ -3,6 +3,7 @@ package auth
 import (
 	"banking/util"
 	"context"
+	"errors"
 	"net/http"
 )
 
@@ -35,10 +36,18 @@ func Middleware(
 	}
 }
 
-func GetJwtUser(w http.ResponseWriter, req *http.Request) (util.JwtUser, bool) {
-	user, ok := req.Context().Value(ctxKey).(util.JwtUser)
-	if !ok {
-		http.Error(w, "claims missing", http.StatusUnauthorized)
+func GetJwtUserFromReq(req *http.Request) (util.JwtUser, error) {
+	if u, ok := req.Context().Value(ctxKey).(util.JwtUser); !ok {
+		return util.JwtUser{}, errors.New("claims missing")
+	} else {
+		return u, nil
 	}
-	return user, ok
+}
+
+func GetJwtUser(w http.ResponseWriter, req *http.Request) (util.JwtUser, bool) {
+	u, err := GetJwtUserFromReq(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+	return u, err == nil
 }

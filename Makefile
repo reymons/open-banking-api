@@ -3,19 +3,28 @@ BUILD_DIR=./bin
 CMD_DIR=./cmd
 
 # Build
-.PHONY: run-internal run-open-banking
+.PHONY: run-internal run-open-banking run-internal-ws run-internal-broker
 
 run-internal:
 	$(GC) run $(CMD_DIR)/internal/main.go
 
+run-internal-ws:
+	$(GC) run $(CMD_DIR)/internal-ws/main.go
+
 run-open-banking:
 	$(GC) run $(CMD_DIR)/open-banking/main.go
 
+run-internal-broker:
+	$(GC) run $(CMD_DIR)/internal-broker/main.go
+
 # Build
-.PHONY: build-internal build-open-banking
+.PHONY: build-internal build-open-banking build-internal-ws
 
 build-internal:
 	$(GC) build -o $(BUILD_DIR)/internal $(CMD_DIR)/internal/main.go
+
+build-internal-vs:
+	$(GC) build -o $(BUILD_DIR)/internal-ws $(CMD_DIR)/internal-ws/main.go
 
 build-open-banking:
 	$(GC) build -o $(BUILD_DIR)/open-banking $(CMD_DIR)/open-banking/main.go
